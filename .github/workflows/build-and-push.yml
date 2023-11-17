@@ -1,9 +1,9 @@
 name: Build and Publish
 
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch:
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -13,6 +13,9 @@ jobs:
   # define job to build and publish docker image
   build-and-push-docker-image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     # steps to perform in job
     steps:
@@ -42,11 +45,13 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           # Note: tags has to be all lower-case
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
